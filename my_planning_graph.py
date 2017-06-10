@@ -3,6 +3,7 @@ from aimacode.search import Problem
 from aimacode.utils import expr
 from lp_utils import decode_state
 
+from itertools import chain
 
 class PgNode:
     """Base class for planning graph nodes.
@@ -303,14 +304,31 @@ class PlanningGraph:
         :return:
             adds A nodes to the current level in self.a_levels[level]
         """
-        # TODO add action A level to the planning graph as described in the Russell-Norvig text
+        # Add action A level to the planning graph as described in the Russell-Norvig text
         # 1. determine what actions to add and create those PgNode_a objects
         # 2. connect the nodes to the previous S literal level
-        # for example, the A0 level will iterate through all possible actions for the problem and add a
-        # PgNode_a to a_levels[0]
-        #   set iff all prerequisite literals for the action hold in S0.  This can be accomplished by testing
-        #   to see if a proposed PgNode_a has prenodes that are a subset of the previous S level.  Once an
-        #   action node is added, it MUST be connected to the S node instances in the appropriate s_level set.
+        #
+        # For example, the A0 level will iterate through all possible actions for the problem and add a
+        # PgNode_a to a_levels[0] set iff all prerequisite literals for the action hold in S0.
+        # This can be accomplished by testing to see if a proposed PgNode_a has prenodes that
+        # are a subset of the previous S level.  Once an action node is added, it MUST be connected
+        # to the S node instances in the appropriate s_level set.
+
+        actions = []
+        self.a_levels.append(actions)
+        states = self.s_levels[level]
+        
+        for a in self.all_actions:
+            action = PgNode_a(a)
+            applicable = action.prenodes.issubset(states)
+            if not applicable:
+                continue
+            actions.append(action)
+            for possible_p in action.prenodes:  # TODO: Reduce nesting, combine iterators
+                ps = [p for p in states if p.symbol == possible_p.symbol]
+                for p in ps:
+                    p.children.add(action)
+                    action.parents.add(p)
 
     def add_literal_level(self, level):
         """ add an S (literal) level to the Planning Graph
@@ -321,14 +339,29 @@ class PlanningGraph:
         :return:
             adds S nodes to the current level in self.s_levels[level]
         """
-        # TODO add literal S level to the planning graph as described in the Russell-Norvig text
+        # Add literal S level to the planning graph as described in the Russell-Norvig text
         # 1. determine what literals to add
         # 2. connect the nodes
-        # for example, every A node in the previous level has a list of S nodes in effnodes that represent the effect
-        #   produced by the action.  These literals will all be part of the new S level.  Since we are working with
-        #   sets, they may be "added" to the set without fear of duplication.  However, it is important to then
-        #   correctly create and connect all of the new S nodes as children of all the A nodes that could produce them,
-        #   and likewise add the A nodes to the parent sets of the S nodes
+        #
+        # For example, every A node in the previous level has a list of S nodes in effnodes that represent the effect
+        # produced by the action.  These literals will all be part of the new S level.  Since we are working with
+        # sets, they may be "added" to the set without fear of duplication.  However, it is important to then
+        # correctly create and connect all of the new S nodes as children of all the A nodes that could produce them,
+        # and likewise add the A nodes to the parent sets of the S nodes
+
+        actions = self.a_levels[level - 1]
+        states = set()
+        self.s_levels.append(states)
+        for a in actions:
+            for eff in a.effnodes:
+                # Creating a new PgNode_s In order to not interfere with the surrounding framework
+                # (a.effnodes are only considered to be "possible", not actual nodes).
+                s = PgNode_s(eff.symbol, eff.is_pos)
+                if s in states:
+                    continue
+                states.add(s)
+                s.parents.add(a)
+                a.children.add(s)
 
     def update_a_mutex(self, nodeset):
         """ Determine and update sibling mutual exclusion for A-level nodes
