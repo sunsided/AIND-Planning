@@ -4,7 +4,7 @@ from aimacode.utils import expr
 from lp_utils import decode_state
 
 
-class PgNode():
+class PgNode:
     """Base class for planning graph nodes.
 
     includes instance sets common to both types of nodes used in a planning graph
@@ -105,7 +105,6 @@ class PgNode_s(PgNode):
 class PgNode_a(PgNode):
     """A-type (action) Planning Graph node - inherited from PgNode """
 
-
     def __init__(self, action: Action):
         """A-level Planning Graph node constructor
 
@@ -197,7 +196,7 @@ def mutexify(node1: PgNode, node2: PgNode):
     node2.mutex.add(node1)
 
 
-class PlanningGraph():
+class PlanningGraph:
     """
     A planning graph as described in chapter 10 of the AIMA text. The planning
     graph can be used to reason about 
@@ -268,7 +267,8 @@ class PlanningGraph():
         # the graph should only be built during class construction
         if (len(self.s_levels) != 0) or (len(self.a_levels) != 0):
             raise Exception(
-                'Planning Graph already created; construct a new planning graph for each new state in the planning sequence')
+                'Planning Graph already created; construct a new planning graph for each new state in the planning '
+                'sequence')
 
         # initialize S0 to literals in initial state provided.
         leveled = False
@@ -306,7 +306,8 @@ class PlanningGraph():
         # TODO add action A level to the planning graph as described in the Russell-Norvig text
         # 1. determine what actions to add and create those PgNode_a objects
         # 2. connect the nodes to the previous S literal level
-        # for example, the A0 level will iterate through all possible actions for the problem and add a PgNode_a to a_levels[0]
+        # for example, the A0 level will iterate through all possible actions for the problem and add a
+        # PgNode_a to a_levels[0]
         #   set iff all prerequisite literals for the action hold in S0.  This can be accomplished by testing
         #   to see if a proposed PgNode_a has prenodes that are a subset of the previous S level.  Once an
         #   action node is added, it MUST be connected to the S node instances in the appropriate s_level set.
@@ -324,10 +325,10 @@ class PlanningGraph():
         # 1. determine what literals to add
         # 2. connect the nodes
         # for example, every A node in the previous level has a list of S nodes in effnodes that represent the effect
-        #   produced by the action.  These literals will all be part of the new S level.  Since we are working with sets, they
-        #   may be "added" to the set without fear of duplication.  However, it is important to then correctly create and connect
-        #   all of the new S nodes as children of all the A nodes that could produce them, and likewise add the A nodes to the
-        #   parent sets of the S nodes
+        #   produced by the action.  These literals will all be part of the new S level.  Since we are working with
+        #   sets, they may be "added" to the set without fear of duplication.  However, it is important to then
+        #   correctly create and connect all of the new S nodes as children of all the A nodes that could produce them,
+        #   and likewise add the A nodes to the parent sets of the S nodes
 
     def update_a_mutex(self, nodeset):
         """ Determine and update sibling mutual exclusion for A-level nodes
