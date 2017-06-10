@@ -257,19 +257,22 @@ class AirCargoProblem(Problem):
             return num_actions
 
         best_count = 0
-        trials = 10
+        trials = 0  # 10
 
-        # Monte-Carlo searching for the smallest number of actions.
-        # Since the actions are explored sequentially, applicable actions might
-        # have undesirable negative effects. To find the best minimum,
-        # we're randomizing the actions and try a couple of times.
-        for _ in range(trials):
-            actions = list(self.actions_list)
-            shuffle(actions)
-            count = heuristic(all_goals, self.actions_list)
-            best_count = min(best_count, count) if count > 0 and best_count > 0 else count
-            if best_count == 1:
-                break
+        if trials > 0:
+                # Monte-Carlo searching for the smallest number of actions.
+            # Since the actions are explored sequentially, applicable actions might
+            # have undesirable negative effects. To find the best minimum,
+            # we're randomizing the actions and try a couple of times.
+            for _ in range(trials):
+                actions = list(self.actions_list)
+                shuffle(actions)
+                count = heuristic(all_goals, actions)
+                best_count = min(best_count, count) if count > 0 and best_count > 0 else count
+                if best_count == 1:
+                    break
+        else:
+            best_count = heuristic(all_goals, self.actions_list)
 
         return best_count
 

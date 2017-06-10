@@ -121,7 +121,7 @@ classes, and the search methods in the AIMA library.
 
 - *Planning Graph*
 
-#### TODO: Implement heuristic method in `my_air_cargo_problems.py`
+#### DONE: Implement heuristic method in `my_air_cargo_problems.py`
 - `AirCargoProblem.h_ignore_preconditions` method
 
 #### TODO: Implement a Planning Graph with automatic heuristics in `my_planning_graph.py`
