@@ -10,6 +10,7 @@ from lp_utils import (
 from my_planning_graph import PlanningGraph
 
 from functools import lru_cache
+from random import shuffle
 
 
 class AirCargoProblem(Problem):
@@ -227,22 +228,50 @@ class AirCargoProblem(Problem):
         conditions by ignoring the preconditions required for an action to be
         executed.
         """
-        # TODO implement (see Russell-Norvig Ed-3 10.2.3  or Russell-Norvig Ed-2 11.2)
+        # See Russell-Norvig Ed-3 10.2.3 or Russell-Norvig Ed-2 11.2
 
         pos_states = self.pos_states(node.state)
         all_goals = set(self.goal)
 
-        count = 0
-        open_goals = set(g for g in all_goals if g not in pos_states)
-        for a in self.actions_list:  # type: Action
-            pos_effects = set(a.effect_add).intersection(open_goals)
-            neg_effects = set(a.effect_rem).intersection(all_goals)
-            if len(pos_effects) > 0:
-                count += 1
-                open_goals.difference_update(pos_effects)
-                open_goals.update(neg_effects)
+        def heuristic(goals, candidate_actions):
+            """
+            Obtains an estimate for the minimum number of actions required
+            to achieve the goal while ignoring preconditions.
 
-        return count
+            :param goals: The set of goal states.
+            :param candidate_actions: The actions to be evaluated.
+            :return: An heuristic for the minimum number of actions.
+            """
+            num_actions = 0
+            open_goals = set(g for g in goals if g not in pos_states)
+            for a in candidate_actions:  # type: Action
+                pos_effects = set(a.effect_add).intersection(open_goals)
+                neg_effects = set(a.effect_rem).intersection(all_goals)
+                # If an action can result in at least one goal state,
+                # we remove its effects from the open goals. Since it can
+                # have negative effects, we add these back to the goal states.
+                if len(pos_effects) > 0:
+                    num_actions += 1
+                    open_goals.difference_update(pos_effects)
+                    open_goals.update(neg_effects)
+            return num_actions
+
+        best_count = 0
+        trials = 10
+
+        # Monte-Carlo searching for the smallest number of actions.
+        # Since the actions are explored sequentially, applicable actions might
+        # have undesirable negative effects. To find the best minimum,
+        # we're randomizing the actions and try a couple of times.
+        for _ in range(trials):
+            actions = list(self.actions_list)
+            shuffle(actions)
+            count = heuristic(all_goals, self.actions_list)
+            best_count = min(best_count, count) if count > 0 and best_count > 0 else count
+            if best_count == 1:
+                break
+
+        return best_count
 
 
 def air_cargo_p1() -> AirCargoProblem:
