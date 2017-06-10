@@ -64,9 +64,9 @@ class AirCargoProblem(Problem):
                     for a in self.airports:
                         precond_pos = [expr("At({}, {})".format(c, a)),
                                        expr("At({}, {})".format(p, a)),
-                                       expr("Cargo({})".format(c)),
-                                       expr("Plane({})".format(p)),
-                                       expr("Airport({})".format(a))
+                                       # expr("Cargo({})".format(c)),
+                                       # expr("Plane({})".format(p)),
+                                       # expr("Airport({})".format(a))
                                        ]
                         precond_neg = []
                         effect_add = [expr("In({}, {})".format(c, p))]
@@ -88,9 +88,9 @@ class AirCargoProblem(Problem):
                     for a in self.airports:
                         precond_pos = [expr("In({}, {})".format(c, p)),
                                        expr("At({}, {})".format(p, a)),
-                                       expr("Cargo({})".format(c)),
-                                       expr("Plane({})".format(p)),
-                                       expr("Airport({})".format(a))
+                                       # expr("Cargo({})".format(c)),
+                                       # expr("Plane({})".format(p)),
+                                       # expr("Airport({})".format(a))
                                        ]
                         precond_neg = []
                         effect_add = [expr("At({}, {})".format(c, a))]
@@ -112,9 +112,9 @@ class AirCargoProblem(Problem):
                     if fr != to:
                         for p in self.planes:
                             precond_pos = [expr("At({}, {})".format(p, fr)),
-                                           expr("Plane({})".format(p)),
-                                           expr("Airport({})".format(fr)),
-                                           expr("Airport({})".format(to)),
+                                           # expr("Plane({})".format(p)),
+                                           # expr("Airport({})".format(fr)),
+                                           # expr("Airport({})".format(to)),
                                            ]
                             precond_neg = []
                             effect_add = [expr("At({}, {})".format(p, to))]
@@ -135,8 +135,16 @@ class AirCargoProblem(Problem):
             e.g. 'FTTTFF'
         :return: list of Action objects
         """
-        # TODO implement
-        possible_actions = []
+        # TODO: It should be possible to use Action.check_precond() here, but the kb and args params are unclear.
+
+        # Checking for both pos and neg due to open world assumption.
+        pos_states = [pair[0] for pair in zip(self.state_map, state) if pair[1] == 'T']
+        neg_states = [pair[0] for pair in zip(self.state_map, state) if pair[1] == 'F']
+
+        possible_actions = [a for a in self.actions_list
+                            if all(p in pos_states for p in a.precond_pos)
+                            and all(p in neg_states for p in a.precond_neg)]
+
         return possible_actions
 
     def result(self, state: str, action: Action):
