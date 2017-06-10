@@ -228,7 +228,20 @@ class AirCargoProblem(Problem):
         executed.
         """
         # TODO implement (see Russell-Norvig Ed-3 10.2.3  or Russell-Norvig Ed-2 11.2)
+
+        pos_states = self.pos_states(node.state)
+        all_goals = set(self.goal)
+
         count = 0
+        open_goals = set(g for g in all_goals if g not in pos_states)
+        for a in self.actions_list:  # type: Action
+            pos_effects = set(a.effect_add).intersection(open_goals)
+            neg_effects = set(a.effect_rem).intersection(all_goals)
+            if len(pos_effects) > 0:
+                count += 1
+                open_goals.difference_update(pos_effects)
+                open_goals.update(neg_effects)
+
         return count
 
 
@@ -282,8 +295,8 @@ def air_cargo_p2() -> AirCargoProblem:
     pos = build_positives('At', cargo_at) + build_positives('At', plane_at)
 
     neg = build_negatives('At', cargos, airports, cargo_at) \
-          + build_negatives('In', cargos, planes) \
-          + build_negatives('At', planes, airports, plane_at)
+        + build_negatives('In', cargos, planes) \
+        + build_negatives('At', planes, airports, plane_at)
 
     init = FluentState(pos, neg)
     goal = build_positives('At', [('C1', 'JFK'), ('C2', 'SFO'), ('C3', 'SFO')])
@@ -302,8 +315,8 @@ def air_cargo_p3() -> AirCargoProblem:
     pos = build_positives('At', cargo_at) + build_positives('At', plane_at)
 
     neg = build_negatives('At', cargos, airports, cargo_at) \
-          + build_negatives('In', cargos, planes) \
-          + build_negatives('At', planes, airports, plane_at)
+        + build_negatives('In', cargos, planes) \
+        + build_negatives('At', planes, airports, plane_at)
 
     init = FluentState(pos, neg)
     goal = build_positives('At', [('C1', 'JFK'), ('C2', 'SFO'), ('C3', 'JFK'), ('C4', 'SFO')])
