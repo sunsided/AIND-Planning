@@ -5,6 +5,7 @@ from lp_utils import decode_state
 
 from itertools import chain
 
+
 class PgNode:
     """Base class for planning graph nodes.
 
@@ -317,7 +318,7 @@ class PlanningGraph:
         actions = []
         self.a_levels.append(actions)
         states = self.s_levels[level]
-        
+
         for a in self.all_actions:
             action = PgNode_a(a)
             applicable = action.prenodes.issubset(states)
@@ -419,8 +420,9 @@ class PlanningGraph:
         :param node_a2: PgNode_a
         :return: bool
         """
-        # TODO test for Inconsistent Effects between nodes
-        return False
+        return any(n for n in node_a2.effnodes
+                   for eff in node_a1.effnodes
+                   if n.symbol == eff.symbol and n.is_pos is not eff.is_pos)
 
     def interference_mutex(self, node_a1: PgNode_a, node_a2: PgNode_a) -> bool:
         """
@@ -436,8 +438,10 @@ class PlanningGraph:
         :param node_a2: PgNode_a
         :return: bool
         """
-        # TODO test for Interference between nodes
-        return False
+        pairs = chain(((e, p) for e in node_a2.effnodes for p in node_a1.prenodes),
+                      ((p, e) for p in node_a2.prenodes for e in node_a1.effnodes))
+        return any(((a, b) for (a, b) in pairs
+                    if a.symbol == b.symbol and a.is_pos is not b.is_pos))
 
     def competing_needs_mutex(self, node_a1: PgNode_a, node_a2: PgNode_a) -> bool:
         """
