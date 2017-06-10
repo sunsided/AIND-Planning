@@ -186,11 +186,61 @@ def air_cargo_p1() -> AirCargoProblem:
     return AirCargoProblem(cargos, planes, airports, init, goal)
 
 
+def build_positives(predicate, rules):
+    return [expr('{}({}, {})'.format(predicate, a0, a1))
+            for (a0, a1) in rules]
+
+
+def build_negatives(predicate, arg0, arg1, exceptions=()):
+    if exceptions is None:
+        exceptions = []
+    return [expr('{}({}, {})'.format(predicate, a0, a1))
+            for a0 in arg0
+            for a1 in arg1
+            if (a0, a1) not in exceptions]
+
+
 def air_cargo_p2() -> AirCargoProblem:
-    # TODO implement Problem 2 definition
-    pass
+    cargos = ['C1', 'C2', 'C3']
+    planes = ['P1', 'P2', 'P3']
+    airports = ['JFK', 'SFO', 'ATL']
+
+    cargo_at = [('C1', 'SFO'), ('C2', 'JFK'), ('C3', 'ATL')]
+    plane_at = [('P1', 'SFO'), ('P2', 'JFK'), ('P3', 'ATL')]
+
+    pos = []
+    pos.extend(build_positives('At', cargo_at))
+    pos.extend(build_positives('At', plane_at))
+
+    neg = []
+    neg.extend(build_negatives('At', cargos, airports, cargo_at))
+    neg.extend(build_negatives('In', cargos, planes))
+    neg.extend(build_negatives('At', planes, airports, plane_at))
+
+    init = FluentState(pos, neg)
+    goal = build_positives('At', [('C1', 'JFK'), ('C2', 'SFO'), ('C3', 'SFO')])
+
+    return AirCargoProblem(cargos, planes, airports, init, goal)
 
 
 def air_cargo_p3() -> AirCargoProblem:
-    # TODO implement Problem 3 definition
-    pass
+    cargos = ['C1', 'C2', 'C3', 'C4']
+    planes = ['P1', 'P2']
+    airports = ['JFK', 'SFO', 'ATL', 'ORD']
+
+    cargo_at = [('C1', 'SFO'), ('C2', 'JFK'), ('C3', 'ATL'), ('C4', 'ORD')]
+    plane_at = [('P1', 'SFO'), ('P2', 'JFK')]
+
+    pos = []
+    pos.extend(build_positives('At', cargo_at))
+    pos.extend(build_positives('At', plane_at))
+
+    neg = []
+    neg.extend(build_negatives('At', cargos, airports, cargo_at))
+    neg.extend(build_negatives('In', cargos, planes))
+    neg.extend(build_negatives('At', planes, airports, plane_at))
+
+    init = FluentState(pos, neg)
+    goal = build_positives('At', [('C1', 'JFK'), ('C2', 'SFO'), ('C3', 'JFK'), ('C4', 'SFO')])
+
+    return AirCargoProblem(cargos, planes, airports, init, goal)
