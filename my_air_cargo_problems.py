@@ -127,6 +127,27 @@ class AirCargoProblem(Problem):
 
         return load_actions() + unload_actions() + fly_actions()
 
+    def pos_states(self, state):
+        """ Return the states that are known to be true.
+
+        :param state: str
+            state represented as T/F string of mapped fluents (state variables)
+            e.g. 'FTTTFF'ß
+        :return: list of state objects
+        """
+        return [pair[0] for pair in zip(self.state_map, state) if pair[1] == 'T']
+
+    def neg_states(self, state):
+        """ Return the states that are known to be false.
+
+        :param state: str
+            state represented as T/F string of mapped fluents (state variables)
+            e.g. 'FTTTFF'
+        :return: list of state objects
+        """
+        # Checking for false explicitly due to open world assumption.
+        return [pair[0] for pair in zip(self.state_map, state) if pair[1] == 'F']
+
     def actions(self, state: str) -> list:
         """ Return the actions that can be executed in the given state.
 
@@ -136,14 +157,9 @@ class AirCargoProblem(Problem):
         :return: list of Action objects
         """
         # TODO: It should be possible to use Action.check_precond() here, but the kb and args params are unclear.
-
-        # Checking for both pos and neg due to open world assumption.
-        pos_states = [pair[0] for pair in zip(self.state_map, state) if pair[1] == 'T']
-        neg_states = [pair[0] for pair in zip(self.state_map, state) if pair[1] == 'F']
-
         possible_actions = [a for a in self.actions_list
-                            if all(p in pos_states for p in a.precond_pos)
-                            and all(p in neg_states for p in a.precond_neg)]
+                            if all(p in self.pos_states(state) for p in a.precond_pos)
+                            and all(p in self.neg_states(state) for p in a.precond_neg)]
 
         return possible_actions
 
@@ -156,8 +172,22 @@ class AirCargoProblem(Problem):
         :param action: Action applied
         :return: resulting state after action
         """
-        # TODO implement
-        new_state = FluentState([], [])
+        pos_states = self.pos_states(state)
+        neg_states = self.neg_states(state)
+
+        for s in action.effect_rem:
+            assert s not in neg_states
+            assert s in pos_states
+            pos_states.remove(s)
+            neg_states.append(s)
+
+        for s in action.effect_add:
+            assert s in neg_states
+            assert s not in pos_states
+            neg_states.remove(s)
+            pos_states.append(s)
+
+        new_state = FluentState(pos_states, neg_states)
         return encode_state(new_state, self.state_map)
 
     def goal_test(self, state: str) -> bool:

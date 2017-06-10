@@ -80,7 +80,7 @@ Init(At(C1, SFO) ∧ At(C2, JFK) ∧ At(C3, ATL) ∧ At(C4, ORD)
 Goal(At(C1, JFK) ∧ At(C3, JFK) ∧ At(C2, SFO) ∧ At(C4, SFO))
 ```
 
-#### TODO: Implement methods and functions in `my_air_cargo_problems.py`
+#### DONE: Implement methods and functions in `my_air_cargo_problems.py`
 - `AirCargoProblem.get_actions` method including `load_actions` and `unload_actions` sub-functions
 - `AirCargoProblem.actions` method
 - `AirCargoProblem.result` method
