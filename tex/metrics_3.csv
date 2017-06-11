@@ -1,0 +1,11 @@
+Problem,Metric,Algorithm,Expansions,Goal Tests,New Nodes,Plan length,Duration (s),Notes
+3,1,Breadth-first,14663,18098,129631,12,71.7485,
+3,2,Breadth-first Tree,,,,,,aborted after six hours
+3,3,Depth-first Graph,408,409,3364,392,1.3500,Extremely many repetitions
+3,4,Depth limited,,,,,,aborted after six hours
+3,5,Uniform cost,18235,18237,159716,12,42.2498,
+3,6,Recursive best-first H1,,,,,,aborted after six hours
+3,7,Greedy best-first Graph H1,5614,5616,49429,22,12.7515,
+3,8,A* H1,18235,18237,159716,12,42.2098,
+3,9,A* Ignore Preconditions,5040,5042,44944,12,20.5403,custom
+3,10,A* PG Levelsum,315,317,2902,12,282.0431,
