@@ -212,9 +212,71 @@ Unload(C4, P2, SFO)
 were \href{https://github.com/sunsided/aima-pseudocode/blob/master/md/Breadth-First-Search.md}{\textit{Breadth-first}} and \href{https://github.com/sunsided/aima-pseudocode/blob/master/md/Tree-Search-and-Graph-Search.md}{\textit{Breadth-first Tree}} (tree search using a FIFO queue-based frontier),
 \href{https://github.com/sunsided/aima-pseudocode/blob/master/md/Tree-Search-and-Graph-Search.md}{\textit{Depth-first Graph}} (graph search using a stack-based frontier), \href{https://github.com/sunsided/aima-pseudocode/blob/master/md/Depth-Limited-Search.md}{\textit{Depth-limited}} and \href{https://github.com/sunsided/aima-pseudocode/blob/master/md/Uniform-Cost-Search.md}{\textit{Uniform cost}} (best-first graph using the path cost as the score) search.
 
+Out of these search strategies, the \textit{depth-first graph} search consistently
+is among the fastest execution times, but never resulted in
+optimal plans; on the contrary, plan lengths resulting from this algorithm
+were one to two orders of magnitudes off from the optimal plan length,
+often undoing actions performed in previous states in order to then repeat this cycle.
+However, the number of node expansions and goal tests was the smallest
+within the group of uninformed algorithms and close to the best algorithms
+in the informed group.
+\textit{Breadth-first} and \textit{uniform cost} searches achieved similar results in
+number of espansions, goal tests, node creations and execution time,
+yielding optimal plans both on all problems.\footnote{
+Since the path cost tends to increase with the depth of the search tree, both
+strategies essentially use a similar approach.}
+For more complex problems, uniform cost search turned out to be slightly more efficient in execution time despite the slightly bigger amount of node explorations
+performed.
+The \textit{Breadth-first tree} and \textit{depth limited} searches failed to converge
+to a solution within a six hour timeframe for the problems 2 (\cref{tab:problem2_metrics}) and 3 (\cref{tab:problem3_metrics}).
+\textit{Depth-limited} search was the worst performer for problem 2 in terms of execution time and the second-worst in problem 1,
+directly followed by \textit{Breadth-first tree} search (\cref{tab:problem1_metrics}) .
+
 \paragraph{Heuristic algorithms:} The heuristic strategies used
 were \href{https://github.com/sunsided/aima-pseudocode/blob/master/md/Recursive-Best-First-Search.md}{\textit{Recursive best-first}}, \textit{Greedy best-first} (best-first search using the heuristic as the score) and \textit{A*} (best-first with the sum of path cost and heuristic as the score) searches with 
 \textit{Constant cost (H1)} (every action has a cost heuristic of $1$), \textit{Precondition ignoring} (every action is applicable) and \textit{\href{https://github.com/sunsided/aima-pseudocode/blob/master/md/GraphPlan.md}{Planning Graph} Level-sum} heuristics.
+
+Out of the informed strategies, \textit{Greedy best-first Graph H1} consistently achieved
+the fastest execution time, but failed to yield optimal plans for
+the two more complex problems.
+The \textit{A*} algorithm with \textit{Planning Graph Level-sum} heuristic,
+on the other hand, consistently resulted in the lowest amount of explored
+states and resulted in optimal plans, but also required an execution time
+that was about tenfold of the others (the exception here is \textit{Recursive best-first Graph} search with \textit{H1} (non-)heuristic which did not finish within a six hour timeframe for problems $2$ and $3$).
+The second-best (informed) algorithm across all problems appear \textit(A*) with \textit{ignoring preconditions} heuristic,
+which resulted in a significantly higher number of explored nodes and goal tests
+but required only a tenth of the execution time of the \textit{Planning Graph Level-sum} variant.
+
+The \textit{Planning Graph Level-sum} heuristic results in the lowest number
+of explorations (significantly less than the competitors) 
+and should consequently be a very good candidate for the best algorithm.
+Since the difference is in the heuristic, the comparatively long execution time 
+must come from the planning graph construction and level-sum evaluation. 
+Optimizing the implementation might result in a much better rating;
+as of writing this document, however, no further optimization was performed.
+
+\paragraph{Performance between classes:} If plan optimality is not required,
+\textit{Greedy best-first Graph H1} performed best according to execution time
+with number of explored states within one order of magnitude of the best 
+algorithm; the plan length consistently was less than twice the length of the
+optimal plan for each problem.
+When number of explorations and plan optimality is critical, \textit{A*} with \textit{Planning Graph Level-sum} heuristic is the go-to choice, with
+execution times within one order of magnitude of the fastest (optimal) algorithm.\footnote{As discussed, an optimized implementation of both the planning graph
+and the heuristic might improve the rating in terms of execution time.}
+If plan optimality and execution time are favored, \textit{A*} with \textit{Ignore preconditions} is the best candidate across the given problems, yielding optimal
+plans and one of the fastest execution times even on the more complex problems.
+The \textit{Depth-first Graph} algorithm finally resulted in the fastest execution
+times with low explorations but resulted in the longest plans.
+It might be worthwile to derive a plan using this algorithm first and then fine-tune
+it to obtain an optimal result.
+
+In comparison to the uninformed algorithms, all optimal informed strategies
+were faster except for the simplest case of problem 1 (also ignoring \textit{Planning Graph Level-sum} heuristic as discussed and \textit{Recursive best-first} search with the \textit(H1) non-heuristic which failed to converge).
+This leads to the conclusion that adding any guides (in the form of heuristics) that help directing the search
+in a graph results in faster convergence to the solution,
+even in presence of suboptimal heuristics.
+
+\pagebreak
 
 \pgfplotstableset{col sep=comma,
 %      fixed,
