@@ -1,0 +1,420 @@
+\documentclass[12pt, a4paper, oneside]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
+\usepackage{listings}
+\usepackage{placeins}
+
+\usepackage{pgfplots,pgfplotstable}
+\pgfplotsset{compat=1.11,
+    /pgfplots/ybar legend/.style={
+    /pgfplots/legend image code/.code={%
+       \draw[##1,/tikz/.cd,yshift=-0.25em]
+        (0cm,0cm) rectangle (3pt,0.8em);},
+   },
+}
+
+\usepackage[capposition=top]{floatrow}
+
+\usepackage{xcolor}
+\usepackage{varioref}
+\usepackage{hyperref}
+\usepackage{cleveref}
+
+\title{AIND: Planning Search -- Heuristics Analysis}
+\author{Markus Mayer}
+\date{\today}
+
+\definecolor{mygreen}{rgb}{0,0.6,0}
+\definecolor{mygray}{rgb}{0.5,0.5,0.5}
+\definecolor{lightgray}{rgb}{0.97,0.97,0.97}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+\definecolor{sepia}{rgb}{0.58,0.1,0.1}
+
+\newcommand{\keyword}[1]{\underline{\textbf{\textsc{#1}}}}
+\newcommand{\keywordb}[1]{\textbf{\textsc{#1}}}
+\newcommand{\literal}[1]{{\color{sepia}{\textsc{#1}}}}
+
+\lstdefinelanguage{planning}
+{
+    keywords={
+        Action,
+        Init,
+        Goal
+    },
+    morekeywords={[2]},
+    morekeywords={[3]
+        Precond,
+        Effect,
+    },
+    morekeywords={[4]
+        Cargo,
+        Plane,
+        Airport,
+        At,
+        In,
+        Load,
+        Unload,
+        Fly},
+    comment=[l]{\;},
+    sensitive=true,
+    extendedchars=true,
+    literate={∧}{{\textcolor{mauve}{\ensuremath\wedge}}}1 {¬}{{\textcolor{red}{\ensuremath\lnot}}}1
+}[keywords, comments]
+
+\lstset{ %
+  backgroundcolor=\color{lightgray},
+  basicstyle=\footnotesize,
+  breakatwhitespace=false,
+  breaklines=true,
+  captionpos=t,
+  commentstyle=\color{mygreen},
+  deletekeywords={...},
+  escapeinside={\%*}{*)},
+  extendedchars=true,
+  frame=none,
+  keepspaces=true,
+  keywordstyle=\color{blue}\keyword,
+  keywordstyle=[3]\color{blue}\keywordb,
+  keywordstyle=[4]\literal,
+  language=planning,
+  morekeywords={*,...},
+  numbers=left,
+  numbersep=5pt,
+  numberstyle=\tiny\color{mygray},
+  rulecolor=\color{black},
+  showspaces=false,
+  showstringspaces=false,
+  showtabs=false,
+  stringstyle=\color{mymauve},
+  tabsize=4,
+  title=\lstname
+}
+
+\begin{document}
+
+\maketitle
+
+%\begin{abstract}
+%\ldots
+%\end{abstract}
+
+
+\section{Problems and optimal plans}
+The three planning problems take place in the Air Cargo domain that consists of
+the object literals \literal{Cargo}, \literal{Plane} and \literal{Airport},
+the propositions \literal{At} and \literal{In} as well as the actions
+defined in \cref{lst:aircargo}.
+
+\begin{lstlisting}[caption=Air Cargo Action Schema,label=lst:aircargo]
+Action(Load(c, p, a),
+    Precond: At(c, a) ∧ At(p, a) 
+           ∧ Cargo(c) ∧ Plane(p) ∧ Airport(a)
+    Effect: ¬ At(c, a) ∧ In(c, p))
+    
+Action(Unload(c, p, a),
+    Precond: In(c, p) ∧ At(p, a) 
+           ∧ Cargo(c) ∧ Plane(p) ∧ Airport(a)
+    Effect: At(c, a) ∧ ¬ In(c, p))
+    
+Action(Fly(p, from, to),
+    Precond: At(p, from) 
+           ∧ Plane(p) ∧ Airport(from) ∧ Airport(to)
+    Effect: ¬ At(p, from) ∧ At(p, to))
+\end{lstlisting}
+
+\paragraph{Problem 1:} The first planning problem using two cargo items, planes and airports is defined in \cref{lst:problem1}. An optimal plan to it consists of $6$ actions and is shown in \cref{lst:problem1_plan}. Since the planner does not know about durations,
+it cannot reason about the order of \literal{Fly} and \literal{Unload} operations that
+are indipendent across airplanes: It might be more efficient to schedule all \literal{Fly}
+actions before all \literal{Unload}s, because there is no need to wait for a plane to unload
+for another to start flying; however, none of that is encoded in the problem domain.
+Metrics for the different planning strategies are shown in \cref{tab:problem1_metrics,fig:problem1_metrics} \vpageref{tab:problem1_metrics,fig:problem1_metrics}.
+
+\begin{lstlisting}[caption=Problem 1 initial state and goal,label=lst:problem1]
+Init(At(C1, SFO) ∧ At(C2, JFK) 
+   ∧ At(P1, SFO) ∧ At(P2, JFK) 
+   ∧ Cargo(C1) ∧ Cargo(C2) 
+   ∧ Plane(P1) ∧ Plane(P2)
+   ∧ Airport(JFK) ∧ Airport(SFO))
+Goal(At(C1, JFK) ∧ At(C2, SFO))
+\end{lstlisting}
+
+\begin{lstlisting}[caption=Problem 1 optimal plan,label=lst:problem1_plan]
+Load(C1, P1, SFO)
+Load(C2, P2, JFK)
+Fly(P2, JFK, SFO)
+Unload(C2, P2, SFO)
+Fly(P1, SFO, JFK)
+Unload(C1, P1, JFK)
+\end{lstlisting}
+
+\paragraph{Problem 2:} The second planning problem uses three cargo items, planes and airports and is defined in \cref{lst:problem2}. An optimal plan to it consists of $9$ actions and is shown in \cref{lst:problem2_plan}.
+Metrics for the different planning strategies are shown in \cref{tab:problem2_metrics,fig:problem2_metrics} \vpageref{tab:problem2_metrics,fig:problem2_metrics}.
+
+\begin{lstlisting}[caption=Problem 2 initial state and goal,label=lst:problem2]
+Init(At(C1, SFO) ∧ At(C2, JFK) ∧ At(C3, ATL) 
+   ∧ At(P1, SFO) ∧ At(P2, JFK) ∧ At(P3, ATL) 
+   ∧ Cargo(C1) ∧ Cargo(C2) ∧ Cargo(C3)
+   ∧ Plane(P1) ∧ Plane(P2) ∧ Plane(P3)
+   ∧ Airport(JFK) ∧ Airport(SFO) ∧ Airport(ATL))
+Goal(At(C1, JFK) ∧ At(C2, SFO) ∧ At(C3, SFO))
+\end{lstlisting}
+
+\begin{lstlisting}[caption=Problem 2 optimal plan,label=lst:problem2_plan]
+Load(C1, P1, SFO)
+Load(C2, P2, JFK)
+Load(C3, P3, ATL)
+Fly(P2, JFK, SFO)
+Unload(C2, P2, SFO)
+Fly(P1, SFO, JFK)
+Unload(C1, P1, JFK)
+Fly(P3, ATL, SFO)
+Unload(C3, P3, SFO)
+\end{lstlisting}
+
+\paragraph{Problem 3:} The third and last planning problem uses four cargo items and airports with only two planes; it is defined in \cref{lst:problem3}. An optimal plan to it consists of $12$ actions and is shown in \cref{lst:problem3_plan}.
+In this plan, plane \textsc{P2} is loaded with both cargo \textsc{C2} and \textsc{C4} at
+the airports \textsc{JFK} (\cref{lst:p3_1st_load}) and \textsc{ORD} (\cref{lst:p3_2nd_load}) respectively, and both are then flown to \textsc{SFO} (\cref{lst:p3_fly}).
+This is a valid plan, as an airplane does not have to be empty in order to be \literal{Load}ed,
+according to the preconditions of that action. If required, the behavior of flying
+only single cargos could be achieved by placing a virtual \textsc{Empty} cargo into the plane,
+similar to the \textsc{Empty} block of the 8-Puzzle domain.
+Metrics for the different planning strategies are shown in \cref{tab:problem3_metrics,fig:problem3_metrics} \vpageref{tab:problem3_metrics,fig:problem3_metrics}.
+
+\begin{lstlisting}[caption=Problem 3 initial state and goal,label=lst:problem3]
+Init(At(C1, SFO) ∧ At(C2, JFK) ∧ At(C3, ATL) ∧ At(C4, ORD) 
+   ∧ At(P1, SFO) ∧ At(P2, JFK) 
+   ∧ Cargo(C1) ∧ Cargo(C2) ∧ Cargo(C3) ∧ Cargo(C4)
+   ∧ Plane(P1) ∧ Plane(P2)
+   ∧ Airport(JFK) ∧ Airport(SFO) ∧ Airport(ATL) ∧ Airport(ORD))
+Goal(At(C1, JFK) ∧ At(C3, JFK) ∧ At(C2, SFO) ∧ At(C4, SFO))
+\end{lstlisting}
+
+\begin{lstlisting}[caption=Problem 3 optimal plan,label=lst:problem3_plan]
+Load(C1, P1, SFO)
+Load(C2, P2, JFK) ; 1st load to P2 %* \label{lst:p3_1st_load} *)
+Fly(P2, JFK, ORD) ; P2 carries C2
+Load(C4, P2, ORD) ; 2nd load to P2 %* \label{lst:p3_2nd_load} *)
+Fly(P1, SFO, ATL)
+Load(C3, P1, ATL)
+Fly(P1, ATL, JFK)
+Unload(C1, P1, JFK)
+Unload(C3, P1, JFK)
+Fly(P2, ORD, SFO) ; P2 carries C2 and C4 %* \label{lst:p3_fly} *)
+Unload(C2, P2, SFO)
+Unload(C4, P2, SFO)
+\end{lstlisting}
+
+\section{Uninformed and informed planning}
+
+\paragraph{Non-heuristic algorithms:} The non-heuristic strategies used
+were \href{https://github.com/sunsided/aima-pseudocode/blob/master/md/Breadth-First-Search.md}{\textit{Breadth-first}} and \href{https://github.com/sunsided/aima-pseudocode/blob/master/md/Tree-Search-and-Graph-Search.md}{\textit{Breadth-first Tree}} (tree search using a FIFO queue-based frontier),
+\href{https://github.com/sunsided/aima-pseudocode/blob/master/md/Tree-Search-and-Graph-Search.md}{\textit{Depth-first Graph}} (graph search using a stack-based frontier), \href{https://github.com/sunsided/aima-pseudocode/blob/master/md/Depth-Limited-Search.md}{\textit{Depth-limited}} and \href{https://github.com/sunsided/aima-pseudocode/blob/master/md/Uniform-Cost-Search.md}{\textit{Uniform cost}} (best-first graph using the path cost as the score) search.
+
+Out of these search strategies, the \textit{depth-first graph} search consistently
+is among the fastest execution times, but never resulted in
+optimal plans; on the contrary, plan lengths resulting from this algorithm
+were one to two orders of magnitudes off from the optimal plan length,
+often undoing actions performed in previous states in order to then repeat this cycle.
+However, the number of node expansions and goal tests was the smallest
+within the group of uninformed algorithms and close to the best algorithms
+in the informed group.
+\textit{Breadth-first} and \textit{uniform cost} searches achieved similar results in
+number of espansions, goal tests, node creations and execution time,
+yielding optimal plans both on all problems.\footnote{
+Since the path cost tends to increase with the depth of the search tree, both
+strategies essentially use a similar approach.}
+For more complex problems, uniform cost search turned out to be slightly more efficient in execution time despite the slightly bigger amount of node explorations
+performed.
+The \textit{Breadth-first tree} and \textit{depth limited} searches failed to converge
+to a solution within a six hour timeframe for the problems 2 (\cref{tab:problem2_metrics}) and 3 (\cref{tab:problem3_metrics}).
+\textit{Depth-limited} search was the worst performer for problem 2 in terms of execution time and the second-worst in problem 1,
+directly followed by \textit{Breadth-first tree} search (\cref{tab:problem1_metrics}) .
+
+\paragraph{Heuristic algorithms:} The heuristic strategies used
+were \href{https://github.com/sunsided/aima-pseudocode/blob/master/md/Recursive-Best-First-Search.md}{\textit{Recursive best-first}}, \textit{Greedy best-first} (best-first search using the heuristic as the score) and \textit{A*} (best-first with the sum of path cost and heuristic as the score) searches with 
+\textit{Constant cost (H1)} (every action has a cost heuristic of $1$), \textit{Precondition ignoring} (every action is applicable) and \textit{\href{https://github.com/sunsided/aima-pseudocode/blob/master/md/GraphPlan.md}{Planning Graph} Level-sum} heuristics.
+
+Out of the informed strategies, \textit{Greedy best-first Graph H1} consistently achieved
+the fastest execution time, but failed to yield optimal plans for
+the two more complex problems.
+The \textit{A*} algorithm with \textit{Planning Graph Level-sum} heuristic,
+on the other hand, consistently resulted in the lowest amount of explored
+states and resulted in optimal plans, but also required an execution time
+that was about tenfold of the others (the exception here is \textit{Recursive best-first Graph} search with \textit{H1} (non-)heuristic which did not finish within a six hour timeframe for problems $2$ and $3$).
+The second-best (informed) algorithm across all problems appear \textit(A*) with \textit{ignoring preconditions} heuristic,
+which resulted in a significantly higher number of explored nodes and goal tests
+but required only a tenth of the execution time of the \textit{Planning Graph Level-sum} variant.
+
+The \textit{Planning Graph Level-sum} heuristic results in the lowest number
+of explorations (significantly less than the competitors) 
+and should consequently be a very good candidate for the best algorithm.
+Since the difference is in the heuristic, the comparatively long execution time 
+must come from the planning graph construction and level-sum evaluation. 
+Optimizing the implementation might result in a much better rating;
+as of writing this document, however, no further optimization was performed.
+
+\paragraph{Performance between classes:} If plan optimality is not required,
+\textit{Greedy best-first Graph H1} performed best according to execution time
+with number of explored states within one order of magnitude of the best 
+algorithm; the plan length consistently was less than twice the length of the
+optimal plan for each problem.
+When number of explorations and plan optimality is critical, \textit{A*} with \textit{Planning Graph Level-sum} heuristic is the go-to choice, with
+execution times within one order of magnitude of the fastest (optimal) algorithm.\footnote{As discussed, an optimized implementation of both the planning graph
+and the heuristic might improve the rating in terms of execution time.}
+If plan optimality and execution time are favored, \textit{A*} with \textit{Ignore preconditions} is the best candidate across the given problems, yielding optimal
+plans and one of the fastest execution times even on the more complex problems.
+The \textit{Depth-first Graph} algorithm finally resulted in the fastest execution
+times with low explorations but resulted in the longest plans.
+It might be worthwile to derive a plan using this algorithm first and then fine-tune
+it to obtain an optimal result.
+
+In comparison to the uninformed algorithms, all optimal informed strategies
+were faster except for the simplest case of problem 1 (also ignoring \textit{Planning Graph Level-sum} heuristic as discussed and \textit{Recursive best-first} search with the \textit(H1) non-heuristic which failed to converge).
+This leads to the conclusion that adding any guides (in the form of heuristics) that help directing the search
+in a graph results in faster convergence to the solution,
+even in presence of suboptimal heuristics.
+
+\pagebreak
+
+\pgfplotstableset{col sep=comma,
+%      fixed,
+%      precision=4,
+	  column type={>{\fontseries{bx}\selectfont}l},
+	  every head row/.style={after row=\hline},
+	  postproc cell content/.append style={
+/pgfplots/table/@cell content/.add={\fontseries{\seriesdefault}\selectfont}{}},
+      columns/Algorithm/.style={string type},
+      columns/New Nodes/.style={column name=New nodes},
+      columns/Goal Tests/.style={column name=Goal tests},
+      columns/Plan length/.style={column name=Length},
+      columns={Algorithm,Expansions,Goal Tests,New Nodes,Plan length,Duration (s)},
+      postproc cell content/.append style={
+/pgfplots/table/@cell content/.add={\fontseries{\seriesdefault}\selectfont}{}}
+      }
+      
+\pgfplotstableread{metrics_1.csv}{\metricsfirst}
+\pgfplotstableread{metrics_2.csv}{\metricssecond}
+\pgfplotstableread{metrics_3.csv}{\metricsthird}
+
+\begin{table*}[hp]
+\pgfplotstabletypeset{metrics_1.csv}
+\caption{Metrics for problem 1}
+\floatfoot{The optimal plan length for this problem is $6$ actions.}
+\label{tab:problem1_metrics}
+\end{table*}
+
+\begin{figure}[hp]
+  \centering
+\begin{tikzpicture}
+  \begin{axis}[
+	    width=12cm,
+	    height=7cm,
+  		ybar,ymode=log,
+  		bar width=2pt,
+  		xtick=data,
+  		xticklabels={Breadth-first,Breadth-first Tree,Depth-first Graph,Depth limited,Uniform cost,Recursive best-first H1,Greedy best-first Graph H1,A* H1,A* Ignore Preconditions,A* PG Levelsum},
+  		x tick label style={rotate=45,anchor=east,font=\footnotesize},
+  		legend pos=outer north east,
+  		legend cell align={left},
+  		legend style={
+  			anchor=north west}]
+    \addplot table[x=Metric, y=Expansions] {\metricsfirst};
+    \addplot table[x=Metric, y=Goal Tests] {\metricsfirst};
+    \addplot table[x=Metric, y=New Nodes] {\metricsfirst};
+    \addplot table[x=Metric, y=Duration (s)] {\metricsfirst}; 
+    
+    \addlegendentry{Expansions (count)}
+    \addlegendentry{Goal Tests (count)}
+    \addlegendentry{New Nodes (count)}
+    \addlegendentry{Execution time (seconds)}
+  \end{axis}
+\end{tikzpicture}
+\caption{Metrics for problem 1}
+\label{fig:problem1_metrics}
+\end{figure}
+
+\FloatBarrier
+
+\begin{table*}[!hp]
+\pgfplotstabletypeset{metrics_2.csv}
+\caption{Metrics for problem 2}
+\floatfoot{The optimal plan length for this problem is $9$ actions.Two of the ten heuristics could not be measured,
+because the execution time of the planner exceeded six hours.}
+\label{tab:problem2_metrics}
+\end{table*}
+
+\begin{figure}[!hp]
+  \centering
+\begin{tikzpicture}
+  \begin{axis}[
+	    width=12cm,
+	    height=7cm,
+  		ybar,ymode=log,
+  		bar width=2pt,
+  		xtick=data,
+  		xticklabels={Breadth-first,Depth-first Graph,Depth limited,Uniform cost,Greedy best-first Graph H1,A* H1,A* Ignore Preconditions,A* PG Levelsum},
+  		x tick label style={rotate=45,anchor=east,font=\footnotesize},
+  		legend pos=outer north east,
+  		legend cell align={left},
+  		legend style={
+  			anchor=north west}]
+    \addplot table[x=Metric, y=Expansions] {\metricssecond};
+    \addplot table[x=Metric, y=Goal Tests] {\metricssecond};
+    \addplot table[x=Metric, y=New Nodes] {\metricssecond};
+    \addplot table[x=Metric, y=Duration (s)] {\metricssecond}; 
+    
+    \addlegendentry{Expansions (count)}
+    \addlegendentry{Goal Tests (count)}
+    \addlegendentry{New Nodes (count)}
+    \addlegendentry{Execution time (seconds)}
+  \end{axis}
+\end{tikzpicture}
+\caption{Metrics for problem 2}
+\label{fig:problem2_metrics}
+\end{figure}
+
+\FloatBarrier
+
+\begin{table*}[!hp]
+\centering
+\pgfplotstabletypeset{metrics_3.csv}
+\caption{Metrics for problem 3}
+\floatfoot{The optimal plan length for this problem is $12$ actions.
+Three of the ten heuristics could not be measured,
+because the execution time of the planner exceeded six hours.}
+\label{tab:problem3_metrics}
+\end{table*}
+
+\begin{figure}[!hp]
+  \centering
+\begin{tikzpicture}
+  \begin{axis}[
+	    width=12cm,
+	    height=7cm,
+  		ybar,ymode=log,
+  		bar width=2pt,
+  		xtick=data,
+  		xticklabels={Breadth-first,Depth-first Graph,Uniform cost,Greedy best-first Graph H1,A* H1,A* Ignore Preconditions,A* PG Levelsum},
+  		x tick label style={rotate=45,anchor=east,font=\footnotesize},
+  		legend pos=outer north east,
+  		legend cell align={left},
+  		legend style={
+  			anchor=north west}]
+    \addplot table[x=Metric, y=Expansions] {\metricsthird};
+    \addplot table[x=Metric, y=Goal Tests] {\metricsthird};
+    \addplot table[x=Metric, y=New Nodes] {\metricsthird};
+    \addplot table[x=Metric, y=Duration (s)] {\metricsthird}; 
+    
+    \addlegendentry{Expansions (count)}
+    \addlegendentry{Goal Tests (count)}
+    \addlegendentry{New Nodes (count)}
+    \addlegendentry{Execution time (seconds)}
+  \end{axis}
+\end{tikzpicture}
+\caption{Metrics for problem 3}
+\label{fig:problem3_metrics}
+\end{figure}
+
+\end{document}

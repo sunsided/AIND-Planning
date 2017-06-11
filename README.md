@@ -80,7 +80,7 @@ Init(At(C1, SFO) ∧ At(C2, JFK) ∧ At(C3, ATL) ∧ At(C4, ORD)
 Goal(At(C1, JFK) ∧ At(C3, JFK) ∧ At(C2, SFO) ∧ At(C4, SFO))
 ```
 
-#### TODO: Implement methods and functions in `my_air_cargo_problems.py`
+#### DONE: Implement methods and functions in `my_air_cargo_problems.py`
 - `AirCargoProblem.get_actions` method including `load_actions` and `unload_actions` sub-functions
 - `AirCargoProblem.actions` method
 - `AirCargoProblem.result` method
@@ -121,10 +121,10 @@ classes, and the search methods in the AIMA library.
 
 - *Planning Graph*
 
-#### TODO: Implement heuristic method in `my_air_cargo_problems.py`
+#### DONE: Implement heuristic method in `my_air_cargo_problems.py`
 - `AirCargoProblem.h_ignore_preconditions` method
 
-#### TODO: Implement a Planning Graph with automatic heuristics in `my_planning_graph.py`
+#### DONE: Implement a Planning Graph with automatic heuristics in `my_planning_graph.py`
 - `PlanningGraph.add_action_level` method
 - `PlanningGraph.add_literal_level` method
 - `PlanningGraph.inconsistent_effects_mutex` method
