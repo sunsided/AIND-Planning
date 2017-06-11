@@ -453,9 +453,10 @@ class PlanningGraph:
         :param node_a2: PgNode_a
         :return: bool
         """
-
-        # TODO test for Competing Needs between nodes
-        return False
+        # I was actually checking the action preconditions here which fails the test, but that's apparently wrong.
+        # The only way to get the test to work is to rely on the graph node mutex sets.
+        return any(p2 in p1.mutex for p1 in node_a1.parents
+                   for p2 in node_a2.parents)
 
     def update_s_mutex(self, nodeset: set):
         """ Determine and update sibling mutual exclusion for S-level nodes
@@ -489,8 +490,7 @@ class PlanningGraph:
         :param node_s2: PgNode_s
         :return: bool
         """
-        # TODO test for negation between nodes
-        return False
+        return node_s1.symbol == node_s2.symbol and node_s1.is_pos is not node_s2.is_pos
 
     def inconsistent_support_mutex(self, node_s1: PgNode_s, node_s2: PgNode_s):
         """
@@ -508,8 +508,8 @@ class PlanningGraph:
         :param node_s2: PgNode_s
         :return: bool
         """
-        # TODO test for Inconsistent Support between nodes
-        return False
+        return not any(set(node_s2.parents).difference(set(a1.mutex))
+                       for a1 in node_s1.parents)
 
     def h_levelsum(self) -> int:
         """The sum of the level costs of the individual goals (admissible if goals independent)
