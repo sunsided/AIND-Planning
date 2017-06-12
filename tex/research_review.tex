@@ -1,0 +1,94 @@
+\documentclass[12pt, a4paper, oneside]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
+\usepackage{listings}
+\usepackage{placeins}
+
+\usepackage[capposition=top]{floatrow}
+
+\usepackage[autostyle]{csquotes}
+
+\usepackage[
+    backend=biber,
+    style=authoryear-icomp,
+    sortlocale=en_US,
+    natbib=true,
+    url=true, 
+    doi=true,
+    eprint=false
+]{biblatex}
+
+\usepackage{xcolor}
+\usepackage{varioref}
+\usepackage{hyperref}
+\usepackage{cleveref}
+
+\usepackage[]{hyperref}
+\hypersetup{
+    colorlinks=true,
+}
+
+\addbibresource{bibliography.bib}
+
+\title{AIND: Planning Search -- Research Review}
+\author{Markus Mayer}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+A quick survey on three important historical developments in the field of AI planning and search.
+\end{abstract}
+
+\section{Standardized planning problem definition languages}
+
+The \textsc{Strips} planner (\textit{Stanford Research Institute Problem Solver}, \cite{Fikes:1971:SNA:1622876.1622939})
+introduced a formal language consisting of a 4-tuple of set of conditions, operations, 
+a start state and a goal state (of true and false literals) under a closed-world
+assumption (i.e. every unmentioned literal is implicitly false).
+The later developed \textsc{Adl} (\textit{Action Description Language}, \cite{Pednault:1989:AEM:112922.112954}) added the
+notion of negative literals in states, the open-world assumption (an unmentioned literal
+has an explictitly unknown truth value), as well as disjunctive goals and types.
+In 1998, the Planning Domain Definition Language \textsc{Pddl} (\cite{Ghallab98}) defined a standard
+language for planning problems and is currently available in version 3.1 (e.g. \cite{Interplan14}).
+\textsc{Pddl} adds object hierarchies, domains and requirements, conditional effects, continuous actions, constants and fluents.
+
+\section{Planning partially ordered plans}
+
+\textsc{Nonlin} and \textsc{SNLP} planners added the ideas of planning partially ordered
+subplans rather than operating directly on the state space (compare \cite{russell2009artificial}).
+The idea here is that actions can be combined into smaller plans, or tasks,
+which can be more efficiently reasoned about.
+By relaxing the strict ordering of plans into a partial ordering,
+plans were now able to be partially executed in parallel.
+While tasks are not (necessarily) determined on-line, this relates 
+with idea of decomposing the search space into individually solvable parts 
+and pattern databases.
+
+\section{Monte-Carlo search and adversarially learned heuristics}
+
+In the field of domain-specific (tactical) plans in a closed-world adversarial scenarios,
+the algorithm implemented for the AlphaGo problem of playing Go against a human opponent (\cite{SilverHuangEtAl16nature})
+combines (ad hoc) depth-first state-space Monte-Carlo search (e.g. \cite{journals/tciaig/BrownePWLCRTPSC12}) with a learned 
+heuristic function implemented using a deep convolutional neural network.
+In addition to only stochastically sampling the space of possible solutions in order
+to quickly approximate the probability of a positive outcome given a specific action,
+a neural network has been trained to predict the value of a specific action given the current world state both in a supervised fashion on known
+outcomes provided by human experts, 
+as well as using reinforcement learning techniques such as deep Q learning
+against time-lagged (i.e. older) versions of itself.
+
+While this kind of planning is not directly applicable to generic plans,
+it sort of resembles the \textsc{GraphPlan} (\cite{Blum95fastplanning}) approach
+of quickly determining a rough estimate of the outcome of selecting a specific
+action.
+Rather than sampling all possible applicable actions per node, only a random subset
+is selected, decreasing execution time.
+
+\printbibliography 
+
+\end{document}
