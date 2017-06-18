@@ -135,7 +135,7 @@ classes, and the search methods in the AIMA library.
 - `PlanningGraph.h_levelsum` method
 
 
-#### TODO: Experiment and document: metrics of A* searches with these heuristics
+#### DONE: Experiment and document: metrics of A* searches with these heuristics
 * Run A* planning searches using the heuristics you have implemented on `air_cargo_p1`, `air_cargo_p2` and `air_cargo_p3`. Provide metrics on number of node expansions required, number of goal tests, time elapsed, and optimality of solution for each search algorithm and include the results in your report. 
 * Use the `run_search` script for this purpose: from the command line type `python run_search.py -h` to learn more.
 
@@ -146,7 +146,7 @@ classes, and the search methods in the AIMA library.
 >![Planning Graph](images/eatcake-graphplan2.png)
 
 ### Part 3: Written Analysis
-#### TODO: Include the following in your written analysis.  
+#### DONE: Include the following in your written analysis.  
 - Provide an optimal plan for Problems 1, 2, and 3.
 - Compare and contrast non-heuristic search result metrics (optimality, time elapsed, number of node expansions) for Problems 1,2, and 3. Include breadth-first, depth-first, and at least one other uninformed non-heuristic search in your comparison; Your third choice of non-heuristic search may be skipped for Problem 3 if it takes longer than 10 minutes to run, but a note in this case should be included.
 - Compare and contrast heuristic search result metrics using A* with the "ignore preconditions" and "level-sum" heuristics for Problems 1, 2, and 3.
